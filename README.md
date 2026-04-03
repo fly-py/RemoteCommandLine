@@ -15,8 +15,8 @@
 
 ## 项目结构
 
-- **服务端** (`nc_server.py`)：监听连接请求，执行命令，将输出实时返回给客户端
-- **客户端** (`nc_client.py`)：连接服务端，发送命令，实时显示执行结果
+- **服务端** (`rc_server.py`)：监听连接请求，执行命令，将输出实时返回给客户端
+- **客户端** (`rc_client.py`)：连接服务端，发送命令，实时显示执行结果
 
 ## 环境要求
 
@@ -29,22 +29,22 @@
 
 ```bash
 # 默认配置：监听 0.0.0.0:5120
-python nc_server.py
+python rc_server.py
 
 # 自定义主机和端口
-python nc_server.py -h 192.168.1.100 -p 8080
+python rc_server.py -h 192.168.1.100 -p 8080
 # 或
-python nc_server.py -host 0.0.0.0 -port 4444
+python rc_server.py -host 0.0.0.0 -port 4444
 ```
 
 ### 客户端连接
 
 ```bash
 # 默认配置：连接 127.0.0.1:5120
-python nc_client.py
+python rc_client.py
 
 # 自定义主机和端口
-python nc_client.py -h 192.168.1.100 -p 8080
+python rc_client.py -h 192.168.1.100 -p 8080
 ```
 
 ## 命令示例
@@ -53,8 +53,8 @@ python nc_client.py -h 192.168.1.100 -p 8080
 
 ```bash
 shell>> ls -la
-shell>> ping google.com -c 4
-shell>> python3
+shell>> ping google.com -t
+shell>> python -u -i
 shell>> vim test.txt   # 交互式编辑器同样支持
 ```
 
