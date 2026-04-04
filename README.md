@@ -1,95 +1,123 @@
----
+# RemoteCommandTool
 
-# PyNetCat
+RemoteCommandTool 是一个基于 Python Socket 的远程命令执行与文件传输工具，支持客户端-服务器模式，可在局域网或本地进行远程 Shell 命令执行和文件发送/接收。
 
-一个基于 Python 开发的轻量级远程 Shell 工具，类似于 NetCat，支持远程命令执行和交互式终端会话。
+## 功能
 
-## 功能特点
+- 远程 Shell 命令执行
+- 支持客户端发送文件到服务器端
+- 非阻塞 Socket I/O，多线程处理输入输出
+- 支持服务器端持续监听多个客户端连接
+- 支持自定义主机地址和端口
 
-- 远程命令执行，提供交互式 Shell 访问
-- 非阻塞 Socket 通信，带超时处理机制
-- 多线程架构，支持输入/输出实时流式传输
-- 支持命令行参数配置主机和端口
-- 可运行标准命令和交互式程序（如编辑器、Python交互环境等）
-- 完善的错误处理和连接恢复机制
+## 安装
 
-## 项目结构
+### 环境要求
 
-- **服务端** (`rc_server.py`)：监听连接请求，执行命令，将输出实时返回给客户端
-- **客户端** (`rc_client.py`)：连接服务端，发送命令，实时显示执行结果
-
-## 环境要求
-
-- Python 3.6 及以上版本
-- 无需额外依赖（仅使用 Python 标准库）
+- Python 3.6 或更高版本
+- 不需要额外安装第三方库（仅使用标准库）
 
 ## 使用方法
 
-### 启动服务端
+### 启动服务器（监听模式）
 
 ```bash
-# 默认配置：监听 0.0.0.0:5120
-python rc_server.py
-
-# 自定义主机和端口
-python rc_server.py -h 192.168.1.100 -p 8080
-# 或
-python rc_server.py -host 0.0.0.0 -port 4444
+python main.py --l --host 0.0.0.0 --port 5120
 ```
 
-### 客户端连接
+或简写：
 
 ```bash
-# 默认配置：连接 127.0.0.1:5120
-python rc_client.py
-
-# 自定义主机和端口
-python rc_client.py -h 192.168.1.100 -p 8080
+python main.py -l -host 0.0.0.0 -port 5120
 ```
 
-## 命令示例
+如果未指定 `--l` 或 `--c`，默认以服务器模式启动。
 
-连接成功后，会看到 `shell>> ` 提示符，输入任意系统命令：
+### 启动客户端（连接模式）
 
 ```bash
-shell>> ls -la
-shell>> ping google.com -t
-shell>> python -u -i
-shell>> vim test.txt   # 交互式编辑器同样支持
+python main.py --c --host 127.0.0.1 --port 5120
 ```
 
-## 配置说明
+或简写：
 
-默认配置：
-- 服务端监听所有网卡（`0.0.0.0`），端口 `5120`
-- 客户端连接本地（`127.0.0.1`），端口 `5120`
-
-如需修改默认配置，可取消注释代码中的 `read_config()` 函数，并创建 `config.json` 文件：
-
-```json
-{
-    "host": "0.0.0.0",
-    "port": 5120
-}
+```bash
+python main.py -c -host 127.0.0.1 -port 5120
 ```
 
-客户端配置文件为 `client_config.json`，格式相同。
+## 命令说明
 
-## 技术实现
+### 客户端支持的命令
 
-- **非阻塞 Socket**：使用 `select.select()` 实现高效的 I/O 多路复用
-- **命令超时**：服务端等待客户端命令时设置 30 秒超时
-- **多线程**：独立的线程处理命令执行和输入/输出流
-- **信号处理**：优雅处理 `KeyboardInterrupt` 和 EOF 错误
+- 普通 Shell 命令：`ls`, `dir`, `pwd` 等，直接输入即可在服务器端执行。
+- 文件发送：  
+  ```
+  sendfile 文件路径
+  ```
+  支持绝对路径或相对路径，文件会传输到服务器当前目录。
 
-## 已知限制
+示例：
 
-- 单客户端连接模式（服务端依次接受、处理连接，不支持并发）
-- 无身份认证和加密功能（仅建议在可信网络环境中使用）
+```
+sendfile /home/user/test.txt
+sendfile ./local_file.png
+```
 
-## 安全警告
+### 服务器端行为
 
-⚠️ **本工具未实现任何加密或身份认证机制，请仅在可信的内部网络环境中使用。** 如需安全的远程访问，建议使用 SSH 或为本工具添加 TLS 加密支持。
+- 收到客户端连接后，自动为每个客户端创建独立线程。
+- 执行客户端发送的 Shell 命令，并将输出返回给客户端。
+- 收到 `send_file!文件名|文件大小` 格式的命令时，自动接收文件并保存到当前目录。
+
+## 退出程序
+
+在客户端按 `Ctrl+C` 或输入 EOF（如 Ctrl+D 在 Linux），程序会询问是否退出，输入 `Y` 确认退出。
+
+## 注意事项
+
+- 服务器和客户端使用非阻塞 Socket，并利用 `select` 进行 I/O 监控。
+- 文件传输期间会临时切换为阻塞模式，传输完成后恢复非阻塞。
+- 仅支持单文件传输，不支持目录递归发送。
+- 建议在受信任的网络环境中使用，本工具未实现加密或认证。
+
+## 目录结构
+
+```
+RemoteCommandLine/
+├── main.py          # 主程序，包含 server 和 client 类
+└── README.md        # 本文件
+```
+
+## 示例
+
+### 启动服务器
+
+```bash
+$ python main.py --l
+Listening on 127.0.0.1:5120...
+accept a connection from ('127.0.0.1', 54321)
+```
+
+### 启动客户端并执行命令
+
+```bash
+$ python main.py --c
+Connecting to 127.0.0.1:5120...
+shell>> ls
+main.py
+README.md
+shell>> sendfile ./test.txt
+Sending file: /path/to/test.txt (1234 bytes)
+File sent successfully: 1234 bytes
+```
+
+### 服务器端输出
+
+```
+accept a connection from ('127.0.0.1', 54321)
+Receiving file: test.txt (1234 bytes)
+File received successfully: test.txt (1234 bytes)
+```
 
 ## 开源协议
 
@@ -97,9 +125,5 @@ MIT License
 
 ## 贡献
 
-欢迎提交 Issue 和 Pull Request！
-
----
-
-*灵感来源于经典的 NetCat 工具。*
+欢迎提交 Issue 和 Pull Request 来改进本项目。
 ```
