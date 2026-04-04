@@ -145,7 +145,16 @@ class client:
                     try:
                         data = self.socket.recv(4096)
                         if data:
-                            print(data.decode(), end='', flush=True)
+                            for encoding in ['utf-8', 'gbk', 'latin-1']:
+                            
+                                try:
+                                    decoded = data.decode(encoding)
+                                    print(decoded, end='', flush=True)
+                                    break
+                                except UnicodeDecodeError:
+                                    continue
+                                
+                                print(decode, end='', flush=True)
                         else:
                             # Empty data means connection closed by server
                             print("\nConnection closed by server.")
@@ -357,7 +366,7 @@ class server:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Remote command tool')
     parser.add_argument('--h', '-host', dest='host', type=str, 
-                        default='127.0.0.1', help='Server host address')
+                        default='0.0.0.0', help='Server host address')
     parser.add_argument('--p', '-port', dest='port', type=int, 
                         default=5120, help='Server port number')
     parser.add_argument('--l', '-listen', dest='lis', action='store_true', help='Open server')
